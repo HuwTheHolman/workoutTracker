@@ -9,9 +9,9 @@ const Stack = createStackNavigator();
 export default function App() {
   return (
     <NavigationContainer>
-      <Stack.Navigator initialRouteName="WorkoutInfo">
+      <Stack.Navigator initialRouteName="workoutInfo">
         <Stack.Screen
-          name="List"
+          name="workoutInfo"
           component={WorkoutInfoScreen}
           options={{ title: "My App" }}
         />

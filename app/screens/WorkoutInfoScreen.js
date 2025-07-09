@@ -6,11 +6,12 @@ import {
   FlatList,
   TouchableOpacity,
   Modal,
+  TextInput,
 } from "react-native";
 import { useState } from "react";
 
 export default function WorkoutInfoScreen() {
-  const listData = [
+  const [listData, setListData] = useState([
     {
       id: "1",
       title: "First Exercise",
@@ -46,19 +47,77 @@ export default function WorkoutInfoScreen() {
       repRange: "6-12",
       currentWorkingWeight: "60kg",
     },
-  ];
+  ]);
 
   // State to track which item's modal is open (null means no modal open)
   const [selectedItem, setSelectedItem] = useState(null);
+  const [isEditing, setIsEditing] = useState(false);
+  // Changed values in edit mode
+  const [editedTitle, setEditedTitle] = useState("");
+  const [editedDescription, setEditedDescription] = useState("");
+  const [editedRepRange, setEditedRepRange] = useState("");
+  const [editedCurrentWorkingWeight, setEditedCurrentWorkingWeight] =
+    useState("");
 
   // Function to open modal with specific item
   const openModal = (item) => {
     setSelectedItem(item);
+    setIsEditing(false); // Always start in view mode
   };
 
   // Function to close modal
   const closeModal = () => {
     setSelectedItem(null);
+    setIsEditing(false);
+    setEditedTitle("");
+    setEditedDescription("");
+    setEditedRepRange("");
+    setEditedCurrentWorkingWeight("");
+  };
+
+  const startEditing = () => {
+    setIsEditing(true);
+    setEditedTitle(selectedItem.title);
+    setEditedDescription(selectedItem.description);
+    setEditedRepRange(selectedItem.repRange);
+    setEditedCurrentWorkingWeight(selectedItem.currentWorkingWeight);
+  };
+
+  const saveChanges = () => {
+    // Update the item in the listData array
+    const updatedListData = listData.map((item) => {
+      if (item.id === selectedItem.id) {
+        return {
+          ...item,
+          title: editedTitle,
+          description: editedDescription,
+          repRange: editedRepRange,
+          currentWorkingWeight: editedCurrentWorkingWeight,
+        };
+      }
+      return item;
+    });
+
+    setListData(updatedListData);
+
+    // Update the selected item to show changes immediately
+    setSelectedItem({
+      ...selectedItem,
+      title: editedTitle,
+      description: editedDescription,
+      repRange: editedRepRange,
+      currentWorkingWeight: editedCurrentWorkingWeight,
+    });
+
+    setIsEditing(false);
+  };
+
+  const cancelEditing = () => {
+    setIsEditing(false);
+    setEditedTitle("");
+    setEditedDescription("");
+    setEditedRepRange("");
+    setEditedCurrentWorkingWeight("");
   };
 
   // Render each interactable list item
@@ -73,7 +132,7 @@ export default function WorkoutInfoScreen() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.header}>Exercise List</Text>
+      <Text style={styles.header}>My Scrollable List</Text>
 
       <FlatList
         data={listData}
@@ -82,50 +141,107 @@ export default function WorkoutInfoScreen() {
         style={styles.list}
       />
 
-      {/* Modal that shows when an item is selected */}
       <Modal
-        visible={selectedItem !== null} // Show modal when an item is selected
-        animationType="fade" // Fade in/out animation
-        transparent={true} // Allows background to show through
-        onRequestClose={closeModal} // Android back button closes modal
+        visible={selectedItem !== null}
+        animationType="fade"
+        transparent={true}
+        onRequestClose={closeModal}
       >
-        {/* Semi-transparent background that closes modal when tapped */}
         <TouchableOpacity
           style={styles.modalBackground}
-          activeOpacity={1} // Prevents opacity change on press
-          onPress={closeModal} // Close modal when background tapped
+          activeOpacity={1}
+          onPress={closeModal}
         >
-          {/* Modal content - stops the background tap from propagating */}
           <TouchableOpacity
             style={styles.modalContent}
-            activeOpacity={1} // Prevents opacity change
-            onPress={() => {}} // Empty function stops tap propagation
+            activeOpacity={1}
+            onPress={() => {}}
           >
-            {/* X button to close modal */}
-            <TouchableOpacity style={styles.closeButton} onPress={closeModal}>
-              <Text style={styles.closeButtonText}>×</Text>
-            </TouchableOpacity>
+            {/* Header with close button and edit button */}
+            <View style={styles.modalHeader}>
+              <TouchableOpacity style={styles.closeButton} onPress={closeModal}>
+                <Text style={styles.closeButtonText}>×</Text>
+              </TouchableOpacity>
 
-            {/* Display the selected item's content */}
+              {!isEditing && (
+                <TouchableOpacity
+                  style={styles.editButton}
+                  onPress={startEditing}
+                >
+                  <Text style={styles.editButtonText}>Edit</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+
+            {/* Conditional content based on editing state */}
             {selectedItem && (
               <>
-                <Text style={styles.modalTitle}>{selectedItem.title}</Text>
-                <Text style={styles.modalDescription}>
-                  {selectedItem.description}
-                </Text>
-                <Text style={styles.modalDescription}>
-                  Rep Range : {selectedItem.repRange}
-                </Text>
-                <Text style={styles.modalDescription}>
-                  Working Weight : {selectedItem.currentWorkingWeight}
-                </Text>
+                {!isEditing ? (
+                  // View mode
+                  <>
+                    <Text style={styles.modalTitle}>{selectedItem.title}</Text>
+                    <Text style={styles.modalDescription}>
+                      {selectedItem.description}
+                    </Text>
+                    <Text style={styles.modalDescription}>
+                      Rep Range : {selectedItem.repRange}
+                    </Text>
+                    <Text style={styles.modalDescription}>
+                      Working Weight : {selectedItem.currentWorkingWeight}
+                    </Text>
+                  </>
+                ) : (
+                  // Edit mode
+                  <>
+                    <TextInput
+                      style={styles.editTitleInput}
+                      value={editedTitle}
+                      onChangeText={setEditedTitle}
+                      placeholder="Title"
+                      multiline={false}
+                    />
+                    <TextInput
+                      style={styles.editDescriptionInput}
+                      value={editedDescription}
+                      onChangeText={setEditedDescription}
+                      placeholder="Description"
+                      multiline={false}
+                      numberOfLines={1}
+                    />
+                    {/* Rep range edit */}
+                    <TextInput
+                      style={styles.editSingleLineInput}
+                      value={editedRepRange}
+                      onChangeText={setEditedRepRange}
+                      placeholder="Rep Range"
+                      multiline={true}
+                      numberOfLines={4}
+                    />
+                    {/* Working weight edit */}
+                    <TextInput
+                      style={styles.editSingleLineInput}
+                      value={editedCurrentWorkingWeight}
+                      onChangeText={setEditedCurrentWorkingWeight}
+                      placeholder="Working Weight"
+                      multiline={true}
+                      numberOfLines={4}
+                    />
+                    {/* Save button */}
+                    <View style={styles.saveButtonContainer}>
+                      <TouchableOpacity
+                        style={styles.saveButton}
+                        onPress={saveChanges}
+                      >
+                        <Text style={styles.saveButtonText}>Save</Text>
+                      </TouchableOpacity>
+                    </View>
+                  </>
+                )}
               </>
             )}
           </TouchableOpacity>
         </TouchableOpacity>
       </Modal>
-
-      <StatusBar style="auto" />
     </View>
   );
 }
@@ -210,5 +326,65 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#666",
     lineHeight: 24,
+  },
+  modalHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 15,
+  },
+  editButton: {
+    padding: 8,
+    borderRadius: 6,
+    backgroundColor: "#007AFF",
+  },
+  editButtonText: {
+    color: "#fff",
+    fontSize: 14,
+    fontWeight: "bold",
+  },
+  editTitleInput: {
+    fontSize: 24,
+    fontWeight: "bold",
+    color: "#333",
+    borderBottomWidth: 2,
+    borderBottomColor: "#007AFF",
+    paddingVertical: 8,
+    marginBottom: 15,
+  },
+  editDescriptionInput: {
+    fontSize: 16,
+    color: "#666",
+    borderWidth: 1,
+    borderColor: "#ddd",
+    borderRadius: 8,
+    padding: 12,
+    minHeight: 100,
+    textAlignVertical: "top", // Android: start text at top
+  },
+  editSingleLineInput: {
+    fontSize: 16,
+    color: "#666",
+    borderWidth: 1,
+    borderColor: "#ddd",
+    borderRadius: 8,
+    padding: 12,
+    minHeight: 30,
+    textAlignVertical: "top", // Android: start text at top
+  },
+  saveButtonContainer: {
+    alignItems: "flex-end",
+    marginTop: 20,
+  },
+  saveButton: {
+    backgroundColor: "#007AFF",
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+  },
+  saveButtonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "bold",
   },
 });
