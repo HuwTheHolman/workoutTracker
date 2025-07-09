@@ -132,7 +132,7 @@ export default function WorkoutInfoScreen() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.header}>My Scrollable List</Text>
+      <Text style={styles.header}>Exercises</Text>
 
       <FlatList
         data={listData}
